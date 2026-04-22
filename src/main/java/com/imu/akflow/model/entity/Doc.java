@@ -21,6 +21,9 @@ public class Doc extends BaseEntity {
     @TableField(value = "doc_content")
     private String docContent;
 
+    @TableField(value = "doc_link")
+    private String docLink;
+
     /**
      * 标签位图，存储tagId（自增id）
      * 示例：如果有标签1,3,5，则位置0,2,4为'1'
