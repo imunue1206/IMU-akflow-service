@@ -8,7 +8,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "com.imu.akflow")
-@MapperScan("com.imu.akflow.mapper")
+@MapperScan("com.imu.akflow.**.mapper")
 public class AkflowApplication {
 
     public static void main(String[] args) {

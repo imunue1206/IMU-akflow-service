@@ -1,64 +1,8 @@
--- 文档表
-CREATE TABLE doc (
-    -- 主键
-    doc_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    -- 基础字段
-    doc_title TEXT NOT NULL,
-    doc_content TEXT,
-
-    upload_path TEXT,
-    upload_path_type TEXT,
-
-    -- 位图字段
-    tag_bitmap TEXT DEFAULT '0',
-
-    -- 统计字段（推荐添加，便于查询）
-    tag_count INTEGER DEFAULT 0,
-
-    -- 基础实体字段
-    create_by TEXT DEFAULT '',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_by TEXT DEFAULT '',
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    version INTEGER DEFAULT 0,
-    is_deleted INTEGER DEFAULT 0,  -- 0-未删除，1-已删除
-
-);
-
--- 标签表
-CREATE TABLE tag (
-    -- 主键
-    tag_id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    -- 基础字段
-    tag_name TEXT NOT NULL,
-    tag_desc TEXT DEFAULT '',
-
-    -- 位图字段
-    doc_bitmap TEXT DEFAULT '0',
-
-    -- 统计字段
-    doc_count INTEGER DEFAULT 0,
-
-    -- 基础实体字段
-    create_by TEXT DEFAULT '',
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_by TEXT DEFAULT '',
-    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    version INTEGER DEFAULT 0,
-    is_deleted INTEGER DEFAULT 0,  -- 0-未删除，1-已删除
-);
-
--- 创建索引
-CREATE INDEX idx_doc_create_time ON doc(create_time);
-CREATE INDEX idx_doc_is_deleted ON doc(is_deleted);
-
-CREATE INDEX idx_tag_create_time ON tag(create_time);
-CREATE INDEX idx_tag_is_deleted ON tag(is_deleted);
+-- AI 模块数据库迁移脚本
+-- 适用于已有数据库，新增 AI 相关表
 
 -- AI 厂商表
-CREATE TABLE ai_provider (
+CREATE TABLE IF NOT EXISTS ai_provider (
     provider_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     base_url TEXT NOT NULL,
@@ -72,7 +16,7 @@ CREATE TABLE ai_provider (
 );
 
 -- AI 模型表
-CREATE TABLE ai_model (
+CREATE TABLE IF NOT EXISTS ai_model (
     model_id INTEGER PRIMARY KEY AUTOINCREMENT,
     provider_id INTEGER NOT NULL,
     model_name TEXT NOT NULL,
@@ -90,7 +34,7 @@ CREATE TABLE ai_model (
 );
 
 -- AI 对话表
-CREATE TABLE ai_conversation (
+CREATE TABLE IF NOT EXISTS ai_conversation (
     conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
     model_id INTEGER NOT NULL,
     title TEXT DEFAULT '',
@@ -106,7 +50,7 @@ CREATE TABLE ai_conversation (
 );
 
 -- AI 消息表
-CREATE TABLE ai_message (
+CREATE TABLE IF NOT EXISTS ai_message (
     message_id INTEGER PRIMARY KEY AUTOINCREMENT,
     conversation_id INTEGER NOT NULL,
     role TEXT NOT NULL,
@@ -121,6 +65,6 @@ CREATE TABLE ai_message (
     is_deleted INTEGER DEFAULT 0
 );
 
-CREATE INDEX idx_ai_model_provider ON ai_model(provider_id);
-CREATE INDEX idx_ai_conversation_model ON ai_conversation(model_id);
-CREATE INDEX idx_ai_message_conversation ON ai_message(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_ai_model_provider ON ai_model(provider_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conversation_model ON ai_conversation(model_id);
+CREATE INDEX IF NOT EXISTS idx_ai_message_conversation ON ai_message(conversation_id);
