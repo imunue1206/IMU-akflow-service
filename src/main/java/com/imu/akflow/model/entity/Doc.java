@@ -18,7 +18,7 @@ import java.util.Set;
 @Data
 @TableName("doc")
 public class Doc extends BaseEntity {
-    @TableId(value = "doc_id", type = IdType.AUTO)
+    @TableId(value = "doc_id", type = IdType.INPUT)
     private Integer docId;
 
     @TableField(value = "doc_title")

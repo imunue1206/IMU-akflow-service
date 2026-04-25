@@ -1,8 +1,12 @@
 package com.imu.akflow.service;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.imu.akflow.mapper.TagMapper;
+import com.imu.akflow.model.common.PageResult;
 import com.imu.akflow.model.entity.Tag;
+import com.imu.akflow.model.vo.TagVO;
 import com.imu.akflow.utils.StrBitMapUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -12,10 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -101,5 +105,32 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
         }
 
         this.removeByIds(tagIds);
+    }
+
+    public TagVO getTagById(Integer tagId) {
+        Tag tag = this.getById(tagId);
+        if (tag == null) {
+            throw new IllegalArgumentException("标签不存在: " + tagId);
+        }
+        return TagVO.from(tag);
+    }
+
+    public PageResult<TagVO> pageTags(Integer page, Integer pageSize, String keyword) {
+        Page<Tag> pageParam = new Page<>(page, pageSize);
+
+        var query = Wrappers.lambdaQuery(Tag.class);
+        if (StringUtils.isNotBlank(keyword)) {
+            query.like(Tag::getTagName, keyword);
+        }
+        query.orderByDesc(Tag::getCreateTime);
+
+        Page<Tag> result = this.page(pageParam, query);
+
+        return PageResult.of(
+                result.getRecords().stream()
+                        .map(TagVO::from)
+                        .collect(Collectors.toList()),
+                result.getTotal()
+        );
     }
 }

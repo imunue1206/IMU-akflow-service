@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @TableName("tag")
 public class Tag extends BaseEntity {
-    @TableId(value = "tag_id", type = IdType.AUTO)
+    @TableId(value = "tag_id", type = IdType.INPUT)
     private Integer tagId;
 
     @TableField(value = "tag_name")

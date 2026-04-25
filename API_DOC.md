@@ -16,15 +16,12 @@
 
 ## 一、文档接口 (Doc)
 
-### 1.1 创建文档
-- **URL**: `POST /api/v1/docs`
+### 1.1 上传文档
+- **URL**: `POST /api/v1/docs/upload`
 - **请求体**:
 ```json
 {
-  "docTitle": "文档标题",
-  "docContent": "文档内容",
-  "uploadPath": "/path/to/file.md",
-  "uploadPathType": "LOCAL",
+  "path": "/path/to/file.md",
   "tagIds": [1, 2, 3]
 }
 ```
@@ -37,16 +34,12 @@
 }
 ```
 
-### 1.2 更新文档
-- **URL**: `PUT /api/v1/docs/{docId}`
+### 1.2 更新文档标签
+- **URL**: `PUT /api/v1/docs/tags/{docId}`
 - **路径参数**: `docId` - 文档ID
-- **请求体**:
+- **请求体**: 标签ID数组
 ```json
-{
-  "docTitle": "新标题",
-  "docContent": "新内容",
-  "tagIds": [1, 2, 4]
-}
+[1, 2, 4]
 ```
 - **响应**:
 ```json

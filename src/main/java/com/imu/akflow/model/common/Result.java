@@ -1,4 +1,4 @@
-package com.imu.akflow.common;
+package com.imu.akflow.model.common;
 
 import lombok.Data;
 

@@ -1,5 +1,6 @@
 package com.imu.akflow.model.vo;
 
+import com.imu.akflow.model.entity.Doc;
 import lombok.Data;
 
 import java.time.LocalDateTime;
