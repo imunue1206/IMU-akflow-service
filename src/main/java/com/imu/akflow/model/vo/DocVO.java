@@ -17,4 +17,7 @@ public class DocVO {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private List<TagSimpleVO> tags;
+    private Integer matchCount;
+    private Double relevanceScore;
+    private Boolean isExactMatch;
 }

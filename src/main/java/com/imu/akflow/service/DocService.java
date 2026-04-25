@@ -17,12 +17,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +45,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
      * 根据本地上传文件进行文档存档
      */
     @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
     public void uploadMdFile(UploadParam param) throws Exception {
         // 读取文件
         File mdFile = FileUtil.getMdFile(param.getPath());
@@ -59,6 +64,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
     }
 
     @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
     public void deleteDoc(Doc doc) {
         this.removeById(doc);
         Set<Integer> tagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
@@ -66,6 +72,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
     }
 
     @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
     public void deleteDocById(Integer docId) {
         Doc doc = this.getById(docId);
         if (doc == null) {
@@ -75,6 +82,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
     }
 
     @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
     public void batchDeleteDocs(Set<Integer> docIds) {
         if (CollectionUtils.isEmpty(docIds)) {
             return;
@@ -103,6 +111,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
     }
 
     @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
     public void updateDocTags(Integer docId, Set<Integer> newTagIds) {
         Doc doc = this.getById(docId);
         if (doc == null) {
@@ -130,12 +139,26 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
 
         Set<Integer> tagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
         if (CollectionUtils.isNotEmpty(tagIds)) {
-            List<Tag> tags = tagService.listByIds(tagIds);
-            vo.setTags(tags.stream().map(TagSimpleVO::from).collect(Collectors.toList()));
+            List<Tag> allTags = tagService.listAllTags();
+            Map<Integer, Tag> tagMap = allTags.stream()
+                    .filter(t -> tagIds.contains(t.getTagId()))
+                    .collect(Collectors.toMap(Tag::getTagId, t -> t));
+            List<TagSimpleVO> tagVOs = tagIds.stream()
+                    .map(tagMap::get)
+                    .filter(t -> t != null)
+                    .map(TagSimpleVO::from)
+                    .collect(Collectors.toList());
+            vo.setTags(tagVOs);
         } else {
             vo.setTags(Collections.emptyList());
         }
 
+        return vo;
+    }
+
+    public DocVO convertToVOWithoutContent(Doc doc) {
+        DocVO vo = convertToVO(doc);
+        vo.setDocContent(null);
         return vo;
     }
 
@@ -190,5 +213,65 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
                         .collect(Collectors.toList()),
                 result.getTotal()
         );
+    }
+
+    @Cacheable(value = "docs", key = "'allWithoutContent'")
+    public List<Doc> listAllWithoutContent() {
+        return this.list(Wrappers.lambdaQuery(Doc.class)
+                .select(Doc::getDocId, Doc::getDocTitle, Doc::getUploadPath, Doc::getUploadPathType,
+                        Doc::getTagBitmap, Doc::getTagCount, Doc::getCreateTime, Doc::getUpdateTime));
+    }
+
+    public PageResult<DocVO> searchByTags(Set<Integer> selectedTagIds, Integer page, Integer pageSize) {
+        if (CollectionUtils.isEmpty(selectedTagIds)) {
+            return PageResult.of(Collections.emptyList(), 0L);
+        }
+
+        List<Doc> docs = listAllWithoutContent();
+        List<DocVO> matchedDocs = new ArrayList<>();
+
+        for (Doc doc : docs) {
+            Set<Integer> docTagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
+            if (CollectionUtils.isEmpty(docTagIds)) {
+                continue;
+            }
+
+            Set<Integer> intersection = new HashSet<>(docTagIds);
+            intersection.retainAll(selectedTagIds);
+
+            if (intersection.isEmpty()) {
+                continue;
+            }
+
+            int matchCount = intersection.size();
+            double relevanceScore = (double) matchCount / selectedTagIds.size();
+            boolean isExactMatch = docTagIds.equals(selectedTagIds);
+
+            DocVO vo = convertToVOWithoutContent(doc);
+            vo.setMatchCount(matchCount);
+            vo.setRelevanceScore(relevanceScore);
+            vo.setIsExactMatch(isExactMatch);
+            matchedDocs.add(vo);
+        }
+
+        matchedDocs.sort((a, b) -> {
+            if (!a.getIsExactMatch().equals(b.getIsExactMatch())) {
+                return b.getIsExactMatch() ? 1 : -1;
+            }
+            if (!a.getMatchCount().equals(b.getMatchCount())) {
+                return b.getMatchCount() - a.getMatchCount();
+            }
+            return Double.compare(b.getRelevanceScore(), a.getRelevanceScore());
+        });
+
+        long total = matchedDocs.size();
+        int fromIndex = (page - 1) * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, matchedDocs.size());
+
+        List<DocVO> pageList = fromIndex < matchedDocs.size()
+                ? matchedDocs.subList(fromIndex, toIndex)
+                : Collections.emptyList();
+
+        return PageResult.of(pageList, total);
     }
 }

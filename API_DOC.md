@@ -147,6 +147,85 @@
 }
 ```
 
+### 1.7 按标签搜索文档
+- **URL**: `GET /api/v1/docs/search-by-tags`
+- **查询参数**:
+  - `tagIds` - 标签ID列表，必填，可传多个
+  - `page` - 页码，默认 1
+  - `pageSize` - 每页条数，默认 10
+- **请求示例**: `GET /api/v1/docs/search-by-tags?tagIds=1,2,3&page=1&pageSize=10`
+- **响应**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "list": [
+      {
+        "docId": 1,
+        "docTitle": "Java入门教程",
+        "docContent": "...",
+        "uploadPath": "/path/to/file.md",
+        "uploadPathType": "LOCAL",
+        "tagCount": 3,
+        "createTime": "2024-01-01T12:00:00",
+        "updateTime": "2024-01-01T12:00:00",
+        "tags": [
+          {
+            "tagId": 1,
+            "tagName": "技术",
+            "tagDesc": "技术类文档"
+          },
+          {
+            "tagId": 2,
+            "tagName": "Java",
+            "tagDesc": "Java相关"
+          },
+          {
+            "tagId": 3,
+            "tagName": "教程",
+            "tagDesc": "教程类"
+          }
+        ],
+        "matchCount": 3,
+        "relevanceScore": 1.0,
+        "isExactMatch": true
+      },
+      {
+        "docId": 2,
+        "docTitle": "Python入门",
+        "docContent": "...",
+        "uploadPath": "/path/to/file2.md",
+        "uploadPathType": "LOCAL",
+        "tagCount": 2,
+        "createTime": "2024-01-01T12:00:00",
+        "updateTime": "2024-01-01T12:00:00",
+        "tags": [
+          {
+            "tagId": 1,
+            "tagName": "技术",
+            "tagDesc": "技术类文档"
+          },
+          {
+            "tagId": 4,
+            "tagName": "Python",
+            "tagDesc": "Python相关"
+          }
+        ],
+        "matchCount": 1,
+        "relevanceScore": 0.33,
+        "isExactMatch": false
+      }
+    ],
+    "total": 50
+  }
+}
+```
+- **排序规则**:
+  1. 精确匹配优先（`isExactMatch=true`）
+  2. 匹配标签数量降序（`matchCount`）
+  3. 相关度比例降序（`relevanceScore`）
+
 ---
 
 ## 二、标签接口 (Tag)
@@ -315,6 +394,9 @@
 | createTime | LocalDateTime | 创建时间 |
 | updateTime | LocalDateTime | 更新时间 |
 | tags | List\<TagSimpleVO\> | 关联的标签列表 |
+| matchCount | Integer | 匹配标签数量（仅搜索接口返回） |
+| relevanceScore | Double | 相关度比例 0-1（仅搜索接口返回） |
+| isExactMatch | Boolean | 是否精确匹配（仅搜索接口返回） |
 
 ### TagSimpleVO
 | 字段 | 类型 | 说明 |

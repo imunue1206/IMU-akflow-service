@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
     /**
      * 新增标签
      */
+    @CacheEvict(value = "tags", allEntries = true)
     public Tag addTag(String tagName, String tagDesc) {
         Tag tag = new Tag();
         tag.setTagName(tagName);
@@ -43,6 +46,7 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
     /**
      * 编辑标签信息（不涉及位图操作）
      */
+    @CacheEvict(value = "tags", allEntries = true)
     public void editTagInfo(Integer tagId, String tagName, String tagDesc) {
         Tag tag = this.getById(tagId);
         if (tag == null) {
@@ -61,6 +65,7 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
      * 删除标签（需要清理所有文档的位图关联）
      */
     @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
     public void deleteTag(Integer tagId) {
         Tag tag = this.getById(tagId);
         if (tag == null) {
@@ -80,6 +85,7 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
      * 批量删除标签（需要清理所有文档的位图关联）
      */
     @Transactional
+    @CacheEvict(value = "tags", allEntries = true)
     public void batchDeleteTags(Set<Integer> tagIds) {
         if (CollectionUtils.isEmpty(tagIds)) {
             return;
@@ -105,6 +111,11 @@ public class TagService extends ServiceImpl<TagMapper, Tag> {
         }
 
         this.removeByIds(tagIds);
+    }
+
+    @Cacheable(value = "tags", key = "'all'")
+    public List<Tag> listAllTags() {
+        return this.list();
     }
 
     public TagVO getTagById(Integer tagId) {

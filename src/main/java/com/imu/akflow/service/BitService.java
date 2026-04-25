@@ -8,6 +8,7 @@ import com.imu.akflow.utils.StrBitMapUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class BitService {
     /**
      * 当文档新增时，进行tag位图增量操作
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void addDocTags(Set<Integer> tagIds, Integer docId) {
         if (CollectionUtils.isEmpty(tagIds)) {
             return;
@@ -57,6 +59,7 @@ public class BitService {
     /**
      * 当文档删除时，进行tag位图删除操作
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void deleteDocTags(Set<Integer> tagIds, Integer docId) {
         if (CollectionUtils.isEmpty(tagIds)) {
             return;
@@ -87,6 +90,7 @@ public class BitService {
      * 批量删除文档时，一次性清理所有标签位图
      * @param docTagMap docId -> tagIds 映射
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void batchDeleteDocTags(Map<Integer, Set<Integer>> docTagMap) {
         if (MapUtils.isEmpty(docTagMap)) {
             return;
@@ -129,6 +133,7 @@ public class BitService {
     /**
      * 当用户手动编辑文档设计标签时，进行tag位图维护
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void changeDocTags(Set<Integer> oldTagIds, Set<Integer> newTagIds, Integer docId) {
         Set<Integer> safeOld = oldTagIds != null ? oldTagIds : Set.of();
         Set<Integer> safeNew = newTagIds != null ? newTagIds : Set.of();
@@ -149,6 +154,7 @@ public class BitService {
     /**
      * 从文档位图中移除指定标签（用于删除标签时清理关联文档）
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void removeTagFromDocs(Integer tagId, Set<Integer> docIds) {
         if (CollectionUtils.isEmpty(docIds)) {
             return;
@@ -179,6 +185,7 @@ public class BitService {
      * 批量删除标签时，一次性清理所有文档位图
      * @param tagDocMap tagId -> docIds 映射
      */
+    @CacheEvict(value = {"docs", "tags"}, allEntries = true)
     public void batchRemoveTagFromDocs(Map<Integer, Set<Integer>> tagDocMap) {
         if (MapUtils.isEmpty(tagDocMap)) {
             return;

@@ -53,4 +53,12 @@ public class DocController {
             @RequestParam(required = false) String keyword) {
         return Result.success(docService.pageDocs(page, pageSize, keyword));
     }
+
+    @GetMapping("/search-by-tags")
+    public Result<PageResult<DocVO>> searchByTags(
+            @RequestParam Set<Integer> tagIds,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return Result.success(docService.searchByTags(tagIds, page, pageSize));
+    }
 }
