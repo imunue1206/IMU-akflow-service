@@ -4,16 +4,22 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.imu.akflow.enums.UploadPathTypeEnum;
+import com.imu.akflow.utils.StrBitMapUtil;
 import com.imu.akflow.model.entity.base.BaseEntity;
+import com.imu.akflow.utils.FileUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.File;
+import java.util.Set;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("doc")
 public class Doc extends BaseEntity {
     @TableId(value = "doc_id", type = IdType.AUTO)
-    private Long docId;
+    private Integer docId;
 
     @TableField(value = "doc_title")
     private String docTitle;
@@ -21,8 +27,11 @@ public class Doc extends BaseEntity {
     @TableField(value = "doc_content")
     private String docContent;
 
-    @TableField(value = "doc_link")
-    private String docLink;
+    @TableField(value = "upload_path")
+    private String uploadPath;
+
+    @TableField(value = "upload_path_type")
+    private UploadPathTypeEnum uploadPathType;
 
     /**
      * 标签位图，存储tagId（自增id）
@@ -36,4 +45,16 @@ public class Doc extends BaseEntity {
      */
     @TableField(value = "tag_count")
     private Integer tagCount = 0;
+
+    public static Doc init(File file, Set<Integer> tagIds) throws Exception {
+        Doc doc = new Doc();
+        doc.setUploadPath(file.getAbsolutePath());
+        doc.setUploadPathType(UploadPathTypeEnum.LOCAL);
+        doc.setDocTitle(FileUtil.extractTitleFromFilename(file.getName()));
+        doc.setDocContent(FileUtil.readMdFileContent(file));
+        doc.setTagCount(tagIds.size());
+        doc.setTagBitmap(StrBitMapUtil.toBitmap(tagIds));
+        return doc;
+    }
+
 }

@@ -7,7 +7,8 @@ CREATE TABLE doc (
     doc_title TEXT NOT NULL,
     doc_content TEXT,
 
-    doc_link TEXT,
+    upload_path TEXT,
+    upload_path_type TEXT,
 
     -- 位图字段
     tag_bitmap TEXT DEFAULT '0',

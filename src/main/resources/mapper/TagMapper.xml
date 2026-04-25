@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.imu.akflow.mapper.TagMapper">
+
+    <update id="updateBatchById">
+        UPDATE tag
+        SET doc_bitmap = CASE tag_id
+            <foreach collection="list" item="tag">
+                WHEN #{tag.tagId} THEN #{tag.docBitmap}
+            </foreach>
+            END,
+            doc_count = CASE tag_id
+            <foreach collection="list" item="tag">
+                WHEN #{tag.tagId} THEN #{tag.docCount}
+            </foreach>
+            END,
+            update_time = CURRENT_TIMESTAMP
+        WHERE tag_id IN
+        <foreach collection="list" item="tag" open="(" separator="," close=")">
+            #{tag.tagId}
+        </foreach>
+    </update>
+
+</mapper>

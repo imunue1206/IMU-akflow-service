@@ -1,4 +1,4 @@
-package com.imu.akflow.bit;
+package com.imu.akflow.utils;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +21,7 @@ public class StrBitMapUtil {
         }
 
         // 找到最大元素值
-        int maxPos = positions.stream()
+        long maxPos = positions.stream()
                 .max(Integer::compareTo)
                 .orElse(-1);
 
@@ -43,7 +43,7 @@ public class StrBitMapUtil {
      * 规则：字符串中'1'的位置就是集合元素
      * 示例："10101" -> {0, 2, 4}
      */
-    public static Set<Integer> bitmapToSetStream(String bitmap) {
+    public static Set<Integer> bitmapToSet(String bitmap) {
         if (StringUtils.isBlank(bitmap)) {
             return new HashSet<>();
         }

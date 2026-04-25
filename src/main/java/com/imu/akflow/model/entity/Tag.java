@@ -13,7 +13,7 @@ import lombok.EqualsAndHashCode;
 @TableName("tag")
 public class Tag extends BaseEntity {
     @TableId(value = "tag_id", type = IdType.AUTO)
-    private Long tagId;
+    private Integer tagId;
 
     @TableField(value = "tag_name")
     private String tagName;
