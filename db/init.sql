@@ -24,8 +24,6 @@ CREATE TABLE doc (
     version INTEGER DEFAULT 0,
     is_deleted INTEGER DEFAULT 0,  -- 0-未删除，1-已删除
 
-    -- 索引
-    UNIQUE(doc_title)
 );
 
 -- 标签表
@@ -50,16 +48,11 @@ CREATE TABLE tag (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     version INTEGER DEFAULT 0,
     is_deleted INTEGER DEFAULT 0,  -- 0-未删除，1-已删除
-
-    -- 唯一约束和索引
-    UNIQUE(tag_name)
 );
 
 -- 创建索引
 CREATE INDEX idx_doc_create_time ON doc(create_time);
 CREATE INDEX idx_doc_is_deleted ON doc(is_deleted);
-CREATE INDEX idx_doc_tag_count ON doc(tag_count);
 
 CREATE INDEX idx_tag_create_time ON tag(create_time);
 CREATE INDEX idx_tag_is_deleted ON tag(is_deleted);
-CREATE INDEX idx_tag_doc_count ON tag(doc_count);

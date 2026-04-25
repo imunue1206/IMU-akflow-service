@@ -32,7 +32,7 @@ public class FileUtil {
 
         // 检查文件扩展名
         String filename = file.getName().toLowerCase();
-        if (!filename.endsWith(".md") || !filename.endsWith(".MD")) {
+        if (!filename.endsWith(".md")) {
             throw new IllegalArgumentException("只支持MarkDown格式文件: " + filename);
         }
 

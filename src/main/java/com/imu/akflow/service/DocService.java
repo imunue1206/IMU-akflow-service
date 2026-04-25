@@ -52,6 +52,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
             deleteDoc(hisDoc);
         }
         this.save(doc);
+        doc = docMapper.queryByDocTitle(doc.getDocTitle());
 
         // 同时更新doc和tag的位图信息
         bitService.addDocTags(param.getTagIds(), doc.getDocId());
