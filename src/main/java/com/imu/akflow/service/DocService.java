@@ -1,6 +1,5 @@
 package com.imu.akflow.service;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.imu.akflow.mapper.DocMapper;
@@ -41,13 +40,9 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
     private final BitService bitService;
     private final TagService tagService;
 
-    /**
-     * 根据本地上传文件进行文档存档
-     */
     @Transactional
     @CacheEvict(value = "docs", allEntries = true)
     public void uploadMdFile(UploadParam param) throws Exception {
-        // 读取文件
         File mdFile = FileUtil.getMdFile(param.getPath());
 
         Doc doc = Doc.init(mdFile, param.getTagIds());
@@ -59,7 +54,6 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
         this.save(doc);
         doc = docMapper.queryByDocTitle(doc.getDocTitle());
 
-        // 同时更新doc和tag的位图信息
         bitService.addDocTags(param.getTagIds(), doc.getDocId());
     }
 
@@ -93,7 +87,6 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
             return;
         }
 
-        // 构建 docId -> tagIds 映射
         Map<Integer, Set<Integer>> docTagMap = new HashMap<>();
         for (Doc doc : docs) {
             Set<Integer> tagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
@@ -102,7 +95,6 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
             }
         }
 
-        // 一次性批量清理所有标签位图
         if (MapUtils.isNotEmpty(docTagMap)) {
             bitService.batchDeleteDocTags(docTagMap);
         }
@@ -126,40 +118,15 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
         bitService.changeDocTags(oldTagIds, newTagIds, docId);
     }
 
-    public DocVO convertToVO(Doc doc) {
-        DocVO vo = new DocVO();
-        vo.setDocId(doc.getDocId());
-        vo.setDocTitle(doc.getDocTitle());
-        vo.setDocContent(doc.getDocContent());
-        vo.setUploadPath(doc.getUploadPath());
-        vo.setUploadPathType(doc.getUploadPathType() != null ? doc.getUploadPathType().name() : null);
-        vo.setTagCount(doc.getTagCount());
-        vo.setCreateTime(doc.getCreateTime());
-        vo.setUpdateTime(doc.getUpdateTime());
-
-        Set<Integer> tagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
-        if (CollectionUtils.isNotEmpty(tagIds)) {
-            List<Tag> allTags = tagService.listAllTags();
-            Map<Integer, Tag> tagMap = allTags.stream()
-                    .filter(t -> tagIds.contains(t.getTagId()))
-                    .collect(Collectors.toMap(Tag::getTagId, t -> t));
-            List<TagSimpleVO> tagVOs = tagIds.stream()
-                    .map(tagMap::get)
-                    .filter(t -> t != null)
-                    .map(TagSimpleVO::from)
-                    .collect(Collectors.toList());
-            vo.setTags(tagVOs);
-        } else {
-            vo.setTags(Collections.emptyList());
+    @Transactional
+    @CacheEvict(value = "docs", allEntries = true)
+    public void updateDocContent(Integer docId, String content) {
+        Doc doc = this.getById(docId);
+        if (doc == null) {
+            throw new IllegalArgumentException("文档不存在: " + docId);
         }
-
-        return vo;
-    }
-
-    public DocVO convertToVOWithoutContent(Doc doc) {
-        DocVO vo = convertToVO(doc);
-        vo.setDocContent(null);
-        return vo;
+        doc.setDocContent(content);
+        this.updateById(doc);
     }
 
     public DocVO getDocById(Integer docId) {
@@ -172,54 +139,14 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
 
     public PageResult<DocVO> pageDocs(Integer page, Integer pageSize, String keyword) {
         Page<Doc> pageParam = new Page<>(page, pageSize);
-
-        var query = Wrappers.lambdaQuery(Doc.class);
-        if (StringUtils.isNotBlank(keyword)) {
-            query.like(Doc::getDocTitle, keyword);
-        }
-        query.orderByDesc(Doc::getCreateTime);
-
-        Page<Doc> result = this.page(pageParam, query);
+        Page<Doc> result = docMapper.selectPageWithoutContent(pageParam, keyword);
 
         return PageResult.of(
                 result.getRecords().stream()
-                        .map(this::convertToVO)
+                        .map(this::convertToVOWithoutContent)
                         .collect(Collectors.toList()),
                 result.getTotal()
         );
-    }
-
-    public PageResult<DocVO> pageDocsByTagId(Integer tagId, Integer page, Integer pageSize) {
-        Tag tag = tagService.getById(tagId);
-        if (tag == null) {
-            throw new IllegalArgumentException("标签不存在: " + tagId);
-        }
-
-        Set<Integer> docIds = StrBitMapUtil.bitmapToSet(tag.getDocBitmap());
-        if (CollectionUtils.isEmpty(docIds)) {
-            return PageResult.of(Collections.emptyList(), 0L);
-        }
-
-        Page<Doc> pageParam = new Page<>(page, pageSize);
-        var query = Wrappers.lambdaQuery(Doc.class)
-                .in(Doc::getDocId, docIds)
-                .orderByDesc(Doc::getCreateTime);
-
-        Page<Doc> result = this.page(pageParam, query);
-
-        return PageResult.of(
-                result.getRecords().stream()
-                        .map(this::convertToVO)
-                        .collect(Collectors.toList()),
-                result.getTotal()
-        );
-    }
-
-    @Cacheable(value = "docs", key = "'allWithoutContent'")
-    public List<Doc> listAllWithoutContent() {
-        return this.list(Wrappers.lambdaQuery(Doc.class)
-                .select(Doc::getDocId, Doc::getDocTitle, Doc::getUploadPath, Doc::getUploadPathType,
-                        Doc::getTagBitmap, Doc::getTagCount, Doc::getCreateTime, Doc::getUpdateTime));
     }
 
     public PageResult<DocVO> searchByTags(Set<Integer> selectedTagIds, Integer page, Integer pageSize) {
@@ -273,5 +200,70 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
                 : Collections.emptyList();
 
         return PageResult.of(pageList, total);
+    }
+
+    public PageResult<DocVO> pageDocsByTagId(Integer tagId, Integer page, Integer pageSize) {
+        Tag tag = tagService.getById(tagId);
+        if (tag == null) {
+            throw new IllegalArgumentException("标签不存在: " + tagId);
+        }
+
+        Set<Integer> docIds = StrBitMapUtil.bitmapToSet(tag.getDocBitmap());
+        if (CollectionUtils.isEmpty(docIds)) {
+            return PageResult.of(Collections.emptyList(), 0L);
+        }
+
+        Page<Doc> pageParam = new Page<>(page, pageSize);
+        Page<Doc> result = docMapper.selectPageByDocIds(pageParam, new ArrayList<>(docIds));
+
+        return PageResult.of(
+                result.getRecords().stream()
+                        .map(this::convertToVOWithoutContent)
+                        .collect(Collectors.toList()),
+                result.getTotal()
+        );
+    }
+
+    @Cacheable(value = "docs", key = "'allWithoutContent'")
+    public List<Doc> listAllWithoutContent() {
+        return docMapper.listAllWithoutContent();
+    }
+
+    public DocVO convertToVO(Doc doc) {
+        return buildDocVO(doc, true);
+    }
+
+    public DocVO convertToVOWithoutContent(Doc doc) {
+        return buildDocVO(doc, false);
+    }
+
+    private DocVO buildDocVO(Doc doc, boolean includeContent) {
+        DocVO vo = new DocVO();
+        vo.setDocId(doc.getDocId());
+        vo.setDocTitle(doc.getDocTitle());
+        vo.setDocContent(includeContent ? doc.getDocContent() : null);
+        vo.setUploadPath(doc.getUploadPath());
+        vo.setUploadPathType(doc.getUploadPathType() != null ? doc.getUploadPathType().name() : null);
+        vo.setTagCount(doc.getTagCount());
+        vo.setCreateTime(doc.getCreateTime());
+        vo.setUpdateTime(doc.getUpdateTime());
+
+        Set<Integer> tagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
+        if (CollectionUtils.isNotEmpty(tagIds)) {
+            List<Tag> allTags = tagService.listAllTags();
+            Map<Integer, Tag> tagMap = allTags.stream()
+                    .filter(t -> tagIds.contains(t.getTagId()))
+                    .collect(Collectors.toMap(Tag::getTagId, t -> t));
+            List<TagSimpleVO> tagVOs = tagIds.stream()
+                    .map(tagMap::get)
+                    .filter(t -> t != null)
+                    .map(TagSimpleVO::from)
+                    .collect(Collectors.toList());
+            vo.setTags(tagVOs);
+        } else {
+            vo.setTags(Collections.emptyList());
+        }
+
+        return vo;
     }
 }

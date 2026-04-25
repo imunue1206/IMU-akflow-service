@@ -1,13 +1,18 @@
 package com.imu.akflow.controller;
 
+import com.imu.akflow.model.entity.Doc;
 import com.imu.akflow.model.common.PageResult;
 import com.imu.akflow.model.common.Result;
 import com.imu.akflow.model.param.UploadParam;
 import com.imu.akflow.model.vo.DocVO;
 import com.imu.akflow.service.DocService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -27,6 +32,29 @@ public class DocController {
     public Result<Void> updateDocTags(@PathVariable Integer docId, @RequestBody Set<Integer> tagIds) {
         docService.updateDocTags(docId, tagIds);
         return Result.success();
+    }
+
+    @PutMapping("/{docId}/content")
+    public Result<Void> updateDocContent(@PathVariable Integer docId, @RequestBody String content) {
+        docService.updateDocContent(docId, content);
+        return Result.success();
+    }
+
+    @GetMapping("/{docId}/export")
+    public ResponseEntity<byte[]> exportDoc(@PathVariable Integer docId) {
+        Doc doc = docService.getById(docId);
+        if (doc == null) {
+            throw new IllegalArgumentException("文档不存在: " + docId);
+        }
+
+        String fileName = doc.getDocTitle() + ".md";
+        byte[] content = doc.getDocContent().getBytes(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("text/markdown"))
+                .contentLength(content.length)
+                .body(content);
     }
 
     @DeleteMapping("/{docId}")

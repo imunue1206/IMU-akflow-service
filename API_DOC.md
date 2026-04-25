@@ -50,7 +50,28 @@
 }
 ```
 
-### 1.3 删除文档
+### 1.3 更新文档内容
+- **URL**: `PUT /api/v1/docs/{docId}/content`
+- **路径参数**: `docId` - 文档ID
+- **请求体**: 文档内容（纯文本字符串）
+```
+"# 文档标题\n\n这是文档内容..."
+```
+- **响应**:
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": null
+}
+```
+
+### 1.4 导出文档为 Markdown
+- **URL**: `GET /api/v1/docs/{docId}/export`
+- **路径参数**: `docId` - 文档ID
+- **响应**: 直接下载 `.md` 文件，文件名为文档标题
+
+### 1.5 删除文档
 - **URL**: `DELETE /api/v1/docs/{docId}`
 - **路径参数**: `docId` - 文档ID
 - **响应**:
@@ -62,7 +83,7 @@
 }
 ```
 
-### 1.4 批量删除文档
+### 1.6 批量删除文档
 - **URL**: `DELETE /api/v1/docs/batch`
 - **请求体**:
 ```json
@@ -77,7 +98,7 @@
 }
 ```
 
-### 1.5 获取文档详情
+### 1.7 获取文档详情
 - **URL**: `GET /api/v1/docs/{docId}`
 - **路径参数**: `docId` - 文档ID
 - **响应**:
@@ -110,7 +131,7 @@
 }
 ```
 
-### 1.6 分页查询文档
+### 1.8 分页查询文档
 - **URL**: `GET /api/v1/docs/page`
 - **查询参数**:
   - `page` - 页码，默认 1
@@ -127,7 +148,7 @@
       {
         "docId": 1,
         "docTitle": "Java入门教程",
-        "docContent": "...",
+        "docContent": null,
         "uploadPath": "/path/to/file.md",
         "uploadPathType": "LOCAL",
         "tagCount": 2,
@@ -146,8 +167,9 @@
   }
 }
 ```
+- **注意**: 分页接口不返回 `docContent` 字段（数据量大），需通过 1.7 接口单独获取
 
-### 1.7 按标签搜索文档
+### 1.9 按标签搜索文档
 - **URL**: `GET /api/v1/docs/search-by-tags`
 - **查询参数**:
   - `tagIds` - 标签ID列表，必填，可传多个
@@ -358,7 +380,7 @@
       {
         "docId": 1,
         "docTitle": "Java入门教程",
-        "docContent": "...",
+        "docContent": null,
         "uploadPath": "/path/to/file.md",
         "uploadPathType": "LOCAL",
         "tagCount": 2,
@@ -377,6 +399,7 @@
   }
 }
 ```
+- **注意**: 分页接口不返回 `docContent` 字段（数据量大），需通过 1.7 接口单独获取
 
 ---
 
