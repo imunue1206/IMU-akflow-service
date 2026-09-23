@@ -24,13 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -288,7 +282,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
                     .collect(Collectors.toMap(Tag::getTagId, t -> t));
             List<TagVO> tagVOs = tagIds.stream()
                     .map(tagMap::get)
-                    .filter(t -> t != null)
+                    .filter(Objects::nonNull)
                     .map(TagVO::from)
                     .collect(Collectors.toList());
             vo.setTags(tagVOs);
