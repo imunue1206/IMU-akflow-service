@@ -45,7 +45,7 @@ public class BitService {
                     .map(tag -> CompletableFuture.runAsync(() -> {
                         Set<Integer> docIds = StrBitMapUtil.bitmapToSet(tag.getDocBitmap());
                         docIds.add(docId);
-                        tag.setDocBitmap(StrBitMapUtil.toBitmap(docIds));
+                        tag.setDocBitmap(StrBitMapUtil.setToBitmap(docIds));
                         tag.setDocCount(docIds.size());
                     }, executor))
                     .toArray(CompletableFuture[]::new);
@@ -75,7 +75,7 @@ public class BitService {
                     .map(tag -> CompletableFuture.runAsync(() -> {
                         Set<Integer> docIds = StrBitMapUtil.bitmapToSet(tag.getDocBitmap());
                         docIds.remove(docId);
-                        tag.setDocBitmap(StrBitMapUtil.toBitmap(docIds));
+                        tag.setDocBitmap(StrBitMapUtil.setToBitmap(docIds));
                         tag.setDocCount(docIds.size());
                     }, executor))
                     .toArray(CompletableFuture[]::new);
@@ -119,7 +119,7 @@ public class BitService {
                         if (CollectionUtils.isNotEmpty(toRemove)) {
                             docIds.removeAll(toRemove);
                         }
-                        tag.setDocBitmap(StrBitMapUtil.toBitmap(docIds));
+                        tag.setDocBitmap(StrBitMapUtil.setToBitmap(docIds));
                         tag.setDocCount(docIds.size());
                     }, executor))
                     .toArray(CompletableFuture[]::new);
@@ -170,7 +170,7 @@ public class BitService {
                     .map(doc -> CompletableFuture.runAsync(() -> {
                         Set<Integer> tagIdSet = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
                         tagIdSet.remove(tagId);
-                        doc.setTagBitmap(StrBitMapUtil.toBitmap(tagIdSet));
+                        doc.setTagBitmap(StrBitMapUtil.setToBitmap(tagIdSet));
                         doc.setTagCount(tagIdSet.size());
                     }, executor))
                     .toArray(CompletableFuture[]::new);
@@ -211,7 +211,7 @@ public class BitService {
                                 tagIdSet.remove(entry.getKey());
                             }
                         }
-                        doc.setTagBitmap(StrBitMapUtil.toBitmap(tagIdSet));
+                        doc.setTagBitmap(StrBitMapUtil.setToBitmap(tagIdSet));
                         doc.setTagCount(tagIdSet.size());
                     }, executor))
                     .toArray(CompletableFuture[]::new);

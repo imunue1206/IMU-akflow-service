@@ -70,7 +70,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
         doc.setDocContent(param.getDocContent());
         doc.setUploadPathType(UploadPathTypeEnum.CREATE);
         doc.setTagCount(tagIds.size());
-        doc.setTagBitmap(StrBitMapUtil.toBitmap(tagIds));
+        doc.setTagBitmap(StrBitMapUtil.setToBitmap(tagIds));
 
         Doc hisDoc = docMapper.queryByDocTitle(doc.getDocTitle());
         if (hisDoc != null) {
@@ -138,7 +138,7 @@ public class DocService extends ServiceImpl<DocMapper, Doc> {
 
         Set<Integer> oldTagIds = StrBitMapUtil.bitmapToSet(doc.getTagBitmap());
         doc.setTagCount(newTagIds != null ? newTagIds.size() : 0);
-        doc.setTagBitmap(StrBitMapUtil.toBitmap(newTagIds));
+        doc.setTagBitmap(StrBitMapUtil.setToBitmap(newTagIds));
         this.updateById(doc);
 
         bitService.changeDocTags(oldTagIds, newTagIds, docId);

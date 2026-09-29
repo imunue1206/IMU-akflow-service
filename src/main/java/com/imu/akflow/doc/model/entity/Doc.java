@@ -53,7 +53,7 @@ public class Doc extends BaseEntity {
         doc.setDocTitle(FileUtil.extractTitleFromFilename(file.getName()));
         doc.setDocContent(FileUtil.readMdFileContent(file));
         doc.setTagCount(tagIds.size());
-        doc.setTagBitmap(StrBitMapUtil.toBitmap(tagIds));
+        doc.setTagBitmap(StrBitMapUtil.setToBitmap(tagIds));
         return doc;
     }
 

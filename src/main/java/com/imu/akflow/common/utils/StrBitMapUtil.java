@@ -15,7 +15,7 @@ public class StrBitMapUtil {
      * 规则：长度为最大元素值+1
      * 示例：{0, 2, 4} -> "10101" (长度5)
      */
-    public static String toBitmap(Set<Integer> positions) {
+    public static String setToBitmap(Set<Integer> positions) {
         if (CollectionUtils.isEmpty(positions)) {
             return "";
         }
